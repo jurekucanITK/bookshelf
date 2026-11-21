@@ -10,4 +10,13 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  test: {
+    environment: 'node',
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{js,jsx}'],
+      exclude: ['src/**/*.test.js'],
+      reporter: ['text', 'html', 'lcov'],
+    },
+  },
 })

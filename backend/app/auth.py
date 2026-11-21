@@ -4,6 +4,7 @@ Frontend poslje zeton v glavi:  Authorization: Bearer <zeton>
 Za zascito endpointa dodaj:      user: User = Depends(get_current_user)
 """
 
+import json
 import logging
 from pathlib import Path
 
@@ -17,7 +18,6 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
 from app.models import User
-import json
 
 logger = logging.getLogger("uvicorn.error")
 

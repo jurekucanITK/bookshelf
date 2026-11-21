@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     database_url: str
     # Kljuc Firebase service account (Project settings -> Service accounts), pot glede na backend/
     firebase_credentials: str = "firebase-service-account.json"
+    firebase_credentials_json: str | None = None
 
     @property
     def cors_origin_list(self) -> list[str]:

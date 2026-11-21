@@ -39,7 +39,7 @@ def register(
     except IntegrityError:
         # Hkratna registracija z enakim imenom ali racunom
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "Username is already taken")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Username is already taken") from None
     db.refresh(user)
     return user
 

@@ -1,7 +1,6 @@
 """Uvoz knjig in podatkov o branju iz Goodreadsa."""
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
-
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
@@ -27,7 +26,7 @@ async def preview_import(file: UploadFile, user: User = Depends(get_current_user
     try:
         rows, skipped = parse_export(content)
     except NotGoodreadsExport:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "not_goodreads_export")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "not_goodreads_export") from None
     return ImportPreview(rows=rows, skipped=skipped)
 
 

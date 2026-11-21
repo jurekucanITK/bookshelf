@@ -70,7 +70,11 @@ def parse_export(content: bytes) -> tuple[list[dict], list[dict]]:
                 "goodreads_id": (record.get("Book Id") or "").strip(),
                 "isbn": _isbn(record.get("ISBN13") or "") or _isbn(record.get("ISBN") or ""),
                 "status": status,
-                "date_read": _date(record.get("Date Read") or "") if status == ReadingStatus.read else None,
+                "date_read": (
+                    _date(record.get("Date Read") or "")
+                    if status == ReadingStatus.read
+                    else None
+                ),
             }
         )
     return rows, skipped

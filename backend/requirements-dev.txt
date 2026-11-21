@@ -1,0 +1,3 @@
+# Orodja za razvoj in CI (lint, testi)
+-r requirements.txt
+ruff==0.17.6

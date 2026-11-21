@@ -11,3 +11,11 @@ venv/
 
 # Firebase kljuc (skrivnost)
 firebase-service-account.json
+
+# Testi in lint
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+coverage/

@@ -1,5 +1,9 @@
 # BookShelf
 
+[![CI/CD](https://github.com/jurekucanITK/bookshelf/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/jurekucanITK/bookshelf/actions/workflows/ci-cd.yml)
+
+**Nameščena aplikacija:** https://bookshelf-jure.netlify.app (API: https://bookshelf-api-jure.onrender.com/docs)
+
 BookShelf je spletna aplikacija za ljubitelje in zbiratelje knjig. Uporabnik v njej spremlja branje (zelim prebrati, trenutno berem, prebrano), ocenjuje knjige in si nastavi letni bralni cilj. Hkrati vodi evidenco domace knjiznice: katere knjige ima, v kaksnem formatu, kje stojijo in komu jih je posodil. Podatke lahko uvozi iz Goodreadsa.
 
 ## Tehnologije
@@ -20,6 +24,7 @@ Dokumentacija je v mapi [`docs`](docs/):
 - [Arhitektura in tehnoloski sklad](docs/04-arhitektura-in-tehnoloski-sklad.md)
 - [Uporabniske zgodbe](docs/05-uporabniske-zgodbe.md)
 - [Wireframes](docs/06-wireframes.md)
+- [Pregled projekta](docs/07-pregled-projekta.md)
 
 ## Lokalni zagon
 
@@ -41,6 +46,8 @@ Backend za preverjanje prijave potrebuje kljuc Firebase service account:
 2. Klikni **Generate new private key** in preneseno datoteko shrani kot `backend/firebase-service-account.json`.
 
 Datoteka je skrivnost in je v `.gitignore`. Brez nje se backend zazene, endpointi s prijavo pa vrnejo napako 503. Spletna konfiguracija za frontend je ze v `frontend/src/firebase.js`.
+
+Če uporabljaš svoj Firebase projekt, kopiraj `frontend/.env.example` v `frontend/.env.local` in nastavi spremenljivke `VITE_FIREBASE_*` (vrednosti so v Firebase konzoli pod **Project settings → General → Your apps**).
 
 ### Zagon aplikacije
 
@@ -79,3 +86,45 @@ Ustvarjeno datoteko v `backend/alembic/versions/` preglej (spremembe `CHECK` ome
 docker compose run --rm backend alembic current     # trenutna verzija baze
 docker compose run --rm backend alembic downgrade -1  # razveljavi zadnjo migracijo
 ```
+
+## Lint in testi
+
+Testi backenda potrebujejo ločeno PostgreSQL bazo, katere ime se mora končati na `_test`. Ustvariš jo enkrat:
+
+```bash
+docker run -d --name bookshelf-test-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=bookshelf_test -p 5433:5432 postgres:16
+```
+
+Backend (Ruff in pytest s pokritostjo):
+
+```bash
+docker compose run --rm -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5433/bookshelf_test backend sh -c "pip install -q -r requirements-dev.txt && ruff check . && pytest"
+```
+
+Frontend (oxlint in Vitest s pokritostjo):
+
+```bash
+docker compose run --rm frontend sh -c "npm run lint && npm run test:coverage"
+```
+
+## CI/CD
+
+Cevovod [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) se zažene ob vsakem pull requestu v `main` in ob vsakem pushu na `main`. Joba `lint`, `build` in `test` tečejo vzporedno, `deploy` pa se zažene šele, ko so vsi trije uspešni.
+
+| Faza | Kaj naredi |
+| --- | --- |
+| `lint` | Preveri frontend z oxlint in backend z Ruff. Ob napaki ali opozorilu job pade. |
+| `build` | Zgradi frontend (`vite build`) in backend kot Docker sliko. Rezultata shrani kot artefakta `frontend-dist` in `backend-image`. Odvisnosti npm in pip ter plasti Docker slike so predpomnjene. |
+| `test` | Zažene teste backenda (pytest na PostgreSQL servisu) in frontenda (Vitest). Poročilo o pokritosti shrani kot artefakt `coverage-report`. |
+| `deploy` | Samo ob pushu na `main`, v okolju `production`. Uporabi artefakte iz joba `build`: Docker sliko objavi v GitHub Container Registry in jo namesti na Render, `dist/` pa namesti na Netlify. Na koncu preveri, da sta frontend in backend dostopna. |
+
+Veja `main` je zaščitena: pull request je mogoče združiti samo, če so `lint`, `build` in `test` uspešni.
+
+### Namestitev
+
+- Frontend: Netlify
+- Backend: Render (Docker slika iz `ghcr.io`, ob zagonu izvede migracije)
+- Baza: Supabase (PostgreSQL), prijava: Firebase Authentication
+- Omejitev: Open Library zavrača povezave z Renderja, zato nameščena aplikacija išče samo po lastnem katalogu. Lokalno iskanje po Open Library deluje.
+
+V GitHubu so nastavljene spremenljivke repozitorija `VITE_API_URL` in `VITE_FIREBASE_*` ter secrets okolja `production`: `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID` in `RENDER_DEPLOY_HOOK_URL`. Na Renderju so nastavljeni `DATABASE_URL`, `CORS_ORIGINS` in `FIREBASE_CREDENTIALS_JSON`.

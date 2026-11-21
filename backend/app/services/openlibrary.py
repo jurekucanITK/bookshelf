@@ -321,7 +321,9 @@ def _author_matches(doc: dict, author: str) -> bool:
     return bool(surname) and surname in names.split(" ")
 
 
-def lookup(isbn: str | None = None, title: str | None = None, author: str | None = None) -> dict | None:
+def lookup(
+    isbn: str | None = None, title: str | None = None, author: str | None = None
+) -> dict | None:
     """Poisce delo z enim klicem: po ISBN ali po naslovu in avtorju.
 
     Vrne osnovne podatke dela (brez opisa in vseh izdaj) ali None.

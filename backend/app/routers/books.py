@@ -93,7 +93,7 @@ def import_book(data: ImportRequest, db: Session = Depends(get_db)):
         work = catalog.import_work(db, data.openlibrary_key)
     except openlibrary.OpenLibraryError:
         logger.exception("Open Library import failed")
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Open Library is unavailable")
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Open Library is unavailable") from None
     if work is None:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, "Book not found on Open Library or it has no ISBN"

@@ -46,7 +46,7 @@ def get_token_claims(
     try:
         return firebase_auth.verify_id_token(token.credentials, app=firebase_app)
     except (ValueError, firebase_auth.InvalidIdTokenError, firebase_auth.ExpiredIdTokenError):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token") from None
 
 
 def get_current_user(

@@ -89,7 +89,7 @@ def set_reading_status(
         db.rollback()
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, "Finish date cannot be before the start date"
-        )
+        ) from None
     db.refresh(entry)
     return entry
 
@@ -164,7 +164,7 @@ def update_session(
         db.rollback()
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, "Finish date cannot be before the start date"
-        )
+        ) from None
     db.refresh(reading_session)
     return reading_session
 

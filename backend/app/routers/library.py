@@ -169,6 +169,6 @@ def lend_book(
     except IntegrityError:
         # Hkratna posoja iste knjige (baza dovoli samo eno aktivno)
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "already_loaned")
+        raise HTTPException(status.HTTP_409_CONFLICT, "already_loaned") from None
     db.refresh(loan)
     return loan

@@ -38,5 +38,5 @@ def health_db(db: Session = Depends(get_db)):
     try:
         db.execute(text("select 1"))
     except SQLAlchemyError:
-        raise HTTPException(status_code=503, detail="Database connection failed")
+        raise HTTPException(status_code=503, detail="Database connection failed") from None
     return {"status": "ok", "database": "connected"}

@@ -79,7 +79,7 @@ def import_rows(db: Session, user: User, rows: list[dict]) -> list[dict]:
 
     pending = [r for r in rows if r["row"] not in known]
     with ThreadPoolExecutor(PARALLEL_REQUESTS) as pool:
-        found = dict(zip((r["row"] for r in pending), pool.map(_lookup, pending)))
+        found = dict(zip((r["row"] for r in pending), pool.map(_lookup, pending), strict=True))
 
     results = []
     for row in rows:

@@ -136,7 +136,8 @@ class Edition(Base):
 
     id: Mapped[int] = id_column()
     work_id: Mapped[int] = fk("works.id", "CASCADE")
-    title: Mapped[str | None] = mapped_column(Text)  # naslov izdaje (npr. prevod); prazno = naslov dela
+    # naslov izdaje (npr. prevod); prazno = naslov dela
+    title: Mapped[str | None] = mapped_column(Text)
     isbn: Mapped[str | None] = mapped_column(Text, unique=True)  # starejse knjige ga nimajo
     # npr. /books/OL7353617M, za izdaje brez ISBN
     openlibrary_key: Mapped[str | None] = mapped_column(Text, unique=True)

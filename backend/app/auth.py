@@ -4,6 +4,7 @@ Frontend poslje zeton v glavi:  Authorization: Bearer <zeton>
 Za zascito endpointa dodaj:      user: User = Depends(get_current_user)
 """
 
+import json
 import logging
 from pathlib import Path
 
@@ -22,7 +23,11 @@ logger = logging.getLogger("uvicorn.error")
 
 # Brez kljuca backend se vedno zazene, endpointi s prijavo pa vrnejo 503
 firebase_app = None
-if Path(settings.firebase_credentials).is_file():
+if settings.firebase_credentials_json:
+    firebase_app = firebase_admin.initialize_app(
+        credentials.Certificate(json.loads(settings.firebase_credentials_json))
+    )
+elif Path(settings.firebase_credentials).is_file():
     firebase_app = firebase_admin.initialize_app(
         credentials.Certificate(settings.firebase_credentials)
     )

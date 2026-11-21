@@ -39,6 +39,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILD_RECORD_UPLOAD: false
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -68,6 +70,7 @@ jobs:
 
       - uses: docker/setup-buildx-action@v4
 
+      # cache plasti, da se pip install ne ponavlja ob vsakem zagonu
       - name: Build backend image
         uses: docker/build-push-action@v7
         with:
@@ -137,3 +140,55 @@ jobs:
             backend/htmlcov
             backend/coverage.xml
             frontend/coverage
+
+  deploy:
+    needs: [lint, build, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.netlify.outputs.url }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-dist
+          path: dist
+      - uses: actions/download-artifact@v8
+        with:
+          name: backend-image
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push backend image
+        id: image
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/bookshelf-backend"
+          gunzip -c backend-image.tar.gz | docker load
+          docker tag "bookshelf-backend:$GITHUB_SHA" "$image:$GITHUB_SHA"
+          docker tag "bookshelf-backend:$GITHUB_SHA" "$image:latest"
+          docker push --all-tags "$image"
+          echo "ref=$image:$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy backend
+        run: curl -fsS -G "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" --data-urlencode "imgURL=${{ steps.image.outputs.ref }}"
+
+      - name: Deploy frontend
+        id: netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          npx --yes netlify-cli@27 deploy --dir=dist --prod --no-build --json > netlify.json
+          echo "url=$(jq -r .url netlify.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Check deployment
+        run: |
+          curl -fsS --retry 5 --retry-all-errors "${{ steps.netlify.outputs.url }}" > /dev/null
+          curl -fsS --retry 20 --retry-delay 15 --retry-all-errors "${{ vars.VITE_API_URL }}/health/db"
